@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Aulon-PC",
+            "request": "launch",
+            "type": "al",
+            "environmentType": "OnPrem",
+            "server": "http://localhost:8080/BC260",
+            "serverInstance": "BC260",
+            "port": 7049,
+            "authentication": "Windows",
+            "breakOnError": "All",
+            "launchBrowser": true,
+        }
+    ]
+}
