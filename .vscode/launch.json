@@ -12,6 +12,7 @@
             "authentication": "Windows",
             "breakOnError": "All",
             "launchBrowser": true,
+            "schemaUpdateMode": "ForceSync"
         }
     ]
 }

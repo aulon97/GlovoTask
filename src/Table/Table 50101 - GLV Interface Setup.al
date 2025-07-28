@@ -15,6 +15,17 @@ table 50101 "GLV Interface Setup"
             Caption = 'Default Interface Customer Template';
             TableRelation = "Customer Templ.";
         }
+        field(3; "Automatic Vendor Creation"; Boolean)
+        {
+            DataClassification = ToBeClassified;
+            Caption = 'Automatic Vendor Creation';
+        }
+        field(4; "Interface Vend. Template"; Code[20])
+        {
+            DataClassification = ToBeClassified;
+            Caption = 'Default Interface Vendor Template';
+            TableRelation = "Vendor Templ.";
+        }
     }
 
     keys

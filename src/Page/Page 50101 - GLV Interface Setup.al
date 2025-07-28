@@ -9,11 +9,20 @@ page 50101 "GLV Interface Setup"
     {
         area(Content)
         {
-            group(GroupName)
+            group(CustomerInterface)
             {
+                Caption = 'Customer Interface';
                 field("Interface Cust. Template"; Rec."Interface Cust. Template")
                 {
                     ToolTip = 'Specifies the value of the Default Interface Customer Template field.', Comment = '%';
+                }
+                field("Interface Vend. Template"; Rec."Interface Vend. Template")
+                {
+                    ToolTip = 'Specifies the value of the Default Interface Vendor Template field.', Comment = '%';
+                }
+                field("Automatic Vendor Creation"; Rec."Automatic Vendor Creation")
+                {
+                    ToolTip = 'Specifies the value of the Automatic Vendor Creation field.', Comment = '%';
                 }
             }
         }

@@ -42,6 +42,10 @@ page 50100 "GLV Interface List"
                 {
                     ToolTip = 'Specifies the value of the Created By field.', Comment = '%';
                 }
+                field(Processed; Rec.Processed)
+                {
+                    ToolTip = 'Specifies the value of the Processed field.', Comment = '%';
+                }
             }
         }
     }
@@ -52,7 +56,7 @@ page 50100 "GLV Interface List"
         {
             action(Test)
             {
-                Caption = 'Test';
+                Caption = 'Get Customer';
                 ApplicationArea = all;
                 Image = TestFile;
                 Promoted = true;
@@ -68,16 +72,16 @@ page 50100 "GLV Interface List"
                     lJsonText: Text;
                 begin
                     //
-                    lJsonObject.Add('actorExternalId', '120112312');
+                    lJsonObject.Add('actorExternalId', 'Aulon Test 2');
                     lJsonObject.Add('actorType', 'PARTNER');
                     lJsonObject.Add('legalName', 'XYZ LIMITED');
-                    lJsonObject.Add('postalCode', '00001');
+                    lJsonObject.Add('postalCode', 'ES-08010');
                     lJsonObject.Add('cityName', 'BARCELONA');
                     lJsonObject.Add('countryCode', 'ES');
                     lJsonObject.Add('addressLine1', 'XXXX STREET, 93');
                     lJsonValue.SetValueToNull();
                     lJsonObject.Add('addressLine2', lJsonValue);
-                    lJsonObject.Add('phone', '+34XXXXXXXXX');
+                    lJsonObject.Add('phone', '+34123456789');
                     lJsonObject.Add('email', 'xxxxx@gmail.com');
                     lJsonObject.Add('taxId', '00000000X');
                     lJsonObject.Add('iban', 'ES0000000000000000000000');
@@ -86,6 +90,50 @@ page 50100 "GLV Interface List"
                     lInterface.Init();
                     lInterface."Guid" := CreateGuid();
                     lInterface.Type := lInterface.Type::Customer;
+                    lInterface.Direction := lInterface.Direction::"In";
+                    lJsonObject.WriteTo(lJsonText);
+                    lInterface.Json.CreateOutStream(lOutStream);
+                    lOutStream.WriteText(lJsonText);
+                    lInterface."Created at" := CurrentDateTime();
+                    lInterface."Creted By" := UserId();
+                    lInterface.Insert(true);
+                    //
+                    CurrPage.Update();
+                end;
+            }
+            action(TestTransaction)
+            {
+                Caption = 'Get Transaction';
+                ApplicationArea = all;
+                Image = TestFile;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                trigger OnAction()
+                var
+                    lInterface: Record "GLV Interface";
+                    lJsonObject: JsonObject;
+                    lJsonValue: JsonValue;
+                    lOutStream: OutStream;
+                    lJsonText: Text;
+                begin
+                    //
+                    lJsonObject.Add('OrderID', '212121');
+                    lJsonObject.Add('countryCode', 'ES');
+                    lJsonObject.Add('cityCode', 'COR');
+                    lJsonObject.Add('orderCode', 'BARCOR01');
+                    lJsonObject.Add('finalStatusTimeLocal', '2024-01-10T14:55+02:00');
+                    lJsonObject.Add('storeAddressId', 120112012);
+                    lJsonObject.Add('campaignId', '237641b6-a875-4c36-a859-0000543c92c8');
+                    lJsonObject.Add('gmy', 28.45);
+                    lJsonObject.Add('commissionAmount', 7.1125);
+                    lJsonObject.Add('adsGMO', 1.2);
+                    lJsonObject.Add('orderDescription', 'XXXX TEST');
+                    //
+                    lInterface.Init();
+                    lInterface."Guid" := CreateGuid();
+                    lInterface.Type := lInterface.Type::Transaction;
                     lInterface.Direction := lInterface.Direction::"In";
                     lJsonObject.WriteTo(lJsonText);
                     lInterface.Json.CreateOutStream(lOutStream);
@@ -110,10 +158,17 @@ page 50100 "GLV Interface List"
                 trigger OnAction()
                 var
                     lInterfaceMgt: Codeunit "GLV Interface Mgt";
+                    lCustNo, lVendNo : Code[20];
+                    lMsgTxt: Text;
                 begin
-                    if lInterfaceMgt.ProcessCustomer(Rec) then begin
+                    if lInterfaceMgt.ProcessCustomer(Rec, lCustNo, lVendNo) then begin
                         Rec.Processed := true;
+                        Rec.Error := '';
                         Rec.Modify(true);
+                        lMsgTxt := StrSubstNo('Customer %1 created!', lCustNo);
+                        if lVendNo <> '' then
+                            lMsgTxt += StrSubstNo(' Vendor %1 created!', lVendNo);
+                        Message(lMsgTxt);
                     end;
                     CurrPage.Update();
                 end;

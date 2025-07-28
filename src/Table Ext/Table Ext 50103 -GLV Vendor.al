@@ -1,4 +1,4 @@
-tableextension 50100 "GLV Customer" extends Customer
+tableextension 50103 "GLV Vendor" extends Vendor
 {
     fields
     {
