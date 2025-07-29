@@ -5,6 +5,128 @@ codeunit 50100 "GLV Interface Mgt"
 
     end;
 
+    procedure ProcessTransaction(var pInterface: Record "GLV Interface"): Code[20]
+    var
+        lJsonTxt, lKeysTxt, lCampaignID, lOrderDesc : Text;
+        lJsonObject: JsonObject;
+        lJsonToken: JsonToken;
+        lKeyList: List of [Text];
+        lInStream: InStream;
+        lCountryCode, lCityCode, lOrderId, lOrderCode : Code[20];
+        lStoreAddressId: Integer;
+        lFinalStatusTime: DateTime;
+        lGMV, lCommissinAmt, lAdsGMO : Decimal;
+        //
+        lSalesHeader: Record "Sales Header";
+        lSalesLine: Record "Sales Line";
+        lSalesRecSetup: Record "Sales & Receivables Setup";
+    begin
+        lSalesRecSetup.Get();
+        //
+        pInterface.Json.CreateInStream(lInStream);
+        lInStream.ReadText(lJsonTxt);
+        lJsonObject.ReadFrom(lJsonTxt);
+        lKeyList := lJsonObject.Keys;
+        //
+        Clear(lOrderId);
+        Clear(lCountryCode);
+        Clear(lCityCode);
+        Clear(lOrderCode);
+        Clear(lStoreAddressId);
+        Clear(lCampaignID);
+        Clear(lGMV);
+        Clear(lCommissinAmt);
+        Clear(lAdsGMO);
+        Clear(lOrderDesc);
+        Clear(lFinalStatusTime);
+        //
+        foreach lKeysTxt in lKeyList do begin
+            lJsonObject.Get(lKeysTxt, lJsonToken);
+            if not lJsonToken.AsValue().IsNull then
+                case lKeysTxt of
+                    'OrderID':
+                        if lJsonToken.AsValue().AsCode() <> '' then begin
+                            lOrderId := lJsonToken.AsValue().AsCode();
+                        end;
+                    'countryCode':
+                        if lJsonToken.AsValue().AsCode() <> '' then begin
+                            lCountryCode := lJsonToken.AsValue().AsCode();
+                        end;
+                    'cityCode':
+                        if lJsonToken.AsValue().AsCode() <> '' then begin
+                            lCityCode := lJsonToken.AsValue().AsCode();
+                        end;
+                    'orderCode':
+                        if lJsonToken.AsValue().AsCode() <> '' then begin
+                            lOrderCode := lJsonToken.AsValue().AsCode();
+                        end;
+                    'storeAddressId':
+                        if lJsonToken.AsValue().AsInteger() <> 0 then begin
+                            lStoreAddressId := lJsonToken.AsValue().AsInteger();
+                        end;
+                    'campaignId':
+                        if lJsonToken.AsValue().AsText() <> '' then begin
+                            lCampaignID := lJsonToken.AsValue().AsText();
+                        end;
+                    'gmv':
+                        if lJsonToken.AsValue().AsDecimal() <> 0 then begin
+                            lGMV := lJsonToken.AsValue().AsDecimal();
+                        end;
+                    'commissionAmount':
+                        if lJsonToken.AsValue().AsDecimal() <> 0 then begin
+                            lCommissinAmt := lJsonToken.AsValue().AsDecimal();
+                        end;
+                    'adsGMO':
+                        if lJsonToken.AsValue().AsDecimal() <> 0 then begin
+                            lAdsGMO := lJsonToken.AsValue().AsDecimal();
+                        end;
+                    'orderDescription':
+                        if lJsonToken.AsValue().AsText() <> '' then begin
+                            lOrderDesc := lJsonToken.AsValue().AsText();
+                        end;
+                // 'finalStatusTimeLocal':
+                //     begin
+                //         if lJsonToken.AsValue().AsDateTime() <> 0DT then begin
+                //             lFinalStatusTime := lJsonToken.AsValue().AsDateTime();
+                //         end;
+                //     end;
+
+                end;
+        end;
+        //create new invvoice
+        if not lSalesHeader.Get(lSalesHeader."Document Type"::Invoice, lOrderId) then begin
+            //Create Sales Header
+            lSalesHeader.Init();
+            lSalesHeader."No." := lOrderId;
+            lSalesHeader."Document Type" := lSalesHeader."Document Type"::Invoice;
+            lSalesHeader."Sell-to Country/Region Code" := lCountryCode;
+            lSalesHeader."Sell-to City" := lCityCode;
+            lSalesHeader."Prices Including VAT" := true;
+            lSalesHeader.Insert();
+            //Create Sales Line for commission amount
+            lSalesLine.Init();
+            lSalesLine."Document No." := lSalesHeader."No.";
+            lSalesLine."Document Type" := lSalesHeader."Document Type";
+            lSalesLine.Quantity := 1;
+            lSalesLine.Validate("Amount Including VAT", lCommissinAmt);
+            lSalesline."No." := lOrderCode;
+            lSalesLine."Line No." := 10000;
+            lSalesLine.Description := lOrderDesc;
+            lSalesLine."GLV GMV" := lGMV;
+            lSalesLine.Insert();
+            //Create Sales Line for adsgmo
+            lSalesLine.InitNewLine(lSalesLine);
+            lSalesLine."Document No." := lSalesHeader."No.";
+            lSalesLine."Document Type" := lSalesHeader."Document Type";
+            lSalesLine.Quantity := 1;
+            lSalesLine.Validate("Amount Including VAT", lAdsGMO);
+            lSalesLine."Line No." := 20000;
+            lSalesLine.Insert();
+            //
+            exit(lSalesHeader."No.")
+        end;
+    end;
+
     procedure ProcessCustomer(var pInterface: Record "GLV Interface"; var pCustNo: Code[20]; var pVendNo: code[20]): Boolean
     var
         lCustomer: Record Customer;

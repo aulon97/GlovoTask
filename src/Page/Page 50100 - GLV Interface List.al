@@ -173,6 +173,31 @@ page 50100 "GLV Interface List"
                     CurrPage.Update();
                 end;
             }
+            action(ProcessTransaction)
+            {
+                Caption = 'Process Transaction';
+                ApplicationArea = all;
+                Image = Transactions;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Visible = (Rec.Type = Rec."Type"::Transaction) and (not Rec.Processed);
+                trigger OnAction()
+                var
+                    lInterfaceMgt: Codeunit "GLV Interface Mgt";
+                    lNo: Code[20];
+                begin
+                    lNo := lInterfaceMgt.ProcessTransaction(Rec);
+                    if lNo <> '' then begin
+                        Rec.Processed := true;
+                        Rec.Error := '';
+                        Rec.Modify(true);
+                        Message('Sales Invoice create with No.: %1', lNo);
+                    end;
+                    CurrPage.Update();
+                end;
+            }
             action(ViewJson)
             {
                 Caption = 'View Json';
